@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno Assistant - Local</title>
+    <!-- Use a highly readable, clean font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 0. Pastel Color Palette & Variables --- */
+        :root {
+            --bg-light: #F0F4F8;       /* Main Background (Soft Gray/Blue) */
+            --text-dark: #1D2118;      /* Main Text (High Contrast) */
+            --pastel-mint: #B5EAD7;    /* Medication/Success */
+            --pastel-peach: #FFDAC1;   /* Appointments/Warning */
+            --pastel-blue: #ABC4FF;    /* Contacts/Primary */
+            --pastel-yellow: #FFFFB5;  /* Bills/Finance */
+            --pastel-red: #FFB3BA;     /* Emergency/Danger */
+            --contrast-red-text: #720026; /* Dark Text for Emergency */
+            --dark-text-blue: #19366F; /* Dark Text for Blue */
+            --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- 1. Basic Reset and Global Styles --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px 20px 100px 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* --- 2. Header and User Info --- */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #E0E5EB;
+        }
+
+        .time-date {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-text-blue);
+            margin-bottom: 5px;
+        }
+
+        .user-id {
+            font-size: 0.9rem;
+            color: #686868;
+            word-break: break-all;
+        }
+
+        /* --- 3. Emergency Button (Crucial Accessibility) --- */
+        .emergency-btn {
+            width: 100%;
+            background-color: var(--pastel-red);
+            color: var(--contrast-red-text);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-light);
+            transition: background-color 0.2s, transform 0.1s;
+            margin-bottom: 30px;
+            min-height: 80px;
+            letter-spacing: 1px;
+        }
+
+        .emergency-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- 4. Feature Grid (Dashboard) --- */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns for smaller cards */
+            gap: 15px;
+        }
+        
+        .dash-card-large {
+            grid-column: span 2; /* Full width for meds and appointments */
+        }
+        
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            border: none;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-light);
+            transition: transform 0.2s;
+            outline: none;
+        }
+
+        .feature-card:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .detail {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+            word-break: break-word;
+        }
+
+        /* Card Colors */
+        .medication-card { background-color: var(--pastel-mint); color: #1A533E; }
+        .appointment-card { background-color: var(--pastel-peach); color: #8C4724; }
+        .contacts-card { background-color: var(--pastel-blue); color: var(--dark-text-blue); }
+        .bills-card { background-color: var(--pastel-yellow); color: #6D6D1A; }
+
+        /* --- 5. Navigation Bar (Fixed Bottom) --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: #FFFFFF;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: #686868;
+            padding: 10px 0;
+            font-size: 0.75rem; /* Smaller text for 6 items */
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.1;
+        }
+
+        .nav-btn span {
+            font-size: 1.4rem; /* Smaller icon size */
+        }
+
+        .nav-btn.active {
+            color: var(--dark-text-blue);
+            font-weight: 700;
+        }
+
+        /* --- 6. View Specific Styles --- */
+        .view {
+            padding-top: 20px;
+            display: none;
+        }
+        .view-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--dark-text-blue);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Data List Items */
+        .list-item {
+            background-color: #FFFFFF;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-info {
+            flex-grow: 1;
+        }
+        .list-item strong {
+            display: block;
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+        }
+        .list-item span {
+            color: #686868;
+            display: block;
+        }
+        .list-item .delete-btn {
+            background: var(--pastel-red);
+            color: var(--contrast-red-text);
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: opacity 0.2s;
+            line-height: 1;
+        }
+        .list-placeholder {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+            background-color: #FFF;
+            border-radius: 15px;
+        }
+
+        /* Add Button */
+        .add-btn {
+            width: 100%;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-light);
+            margin-top: 15px;
+            min-height: 60px;
+        }
+
+        /* --- 7. Modal Form Styles (Consistent across all forms) --- */
+        .form-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .form-modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 95%;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--dark-text-blue);
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            resize: vertical;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--pastel-mint);
+            outline: none;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .form-actions button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-save { background-color: var(--pastel-mint); color: #1A533E; }
+        .btn-cancel { background-color: #E0E5EB; color: var(--text-dark); }
+        .btn-primary-blue { background-color: var(--pastel-blue); color: var(--dark-text-blue);}
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- Header: Time and User Info -->
+        <div class="header">
+            <div id="time-date" class="time-date">Loading Time...</div>
+            <div id="user-info" class="user-id">Local Storage Mode</div>
+        </div>
+
+        <!-- Hidden Modal for Alerts -->
+        <div id="app-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 30px; border-radius: 15px; max-width: 350px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+                <p id="modal-message" style="font-size: 1.2rem; font-weight: 500;"></p>
+                <button onclick="document.getElementById('app-modal').style.display='none';" style="margin-top: 15px; padding: 10px 20px; background-color: var(--pastel-blue); color: var(--dark-text-blue); border: none; border-radius: 10px; cursor: pointer; font-weight: 700;">OK</button>
+            </div>
+        </div>
+        
+        <!-- === 1. MEDICATION FORM MODAL (Existing) === -->
+        <div id="medication-form-modal" class="form-modal">
+            <div class="form-modal-content">
+                <h2 class="view-title" style="margin-top: 0; font-size: 2rem;">Add New Medicine</h2>
+                <form id="add-medication-form">
+                    <div class="form-group">
+                        <label for="med-name">Medicine Name</label>
+                        <input type="text" id="med-name" name="name" placeholder="e.g., Aspirin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="med-dosage">Dosage/Amount</label>
+                        <input type="text" id="med-dosage" name="dosage" placeholder="e.g., 500mg, 1 Pill" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="med-frequency">Frequency</label>
+                        <select id="med-frequency" name="frequency">
+                            <option value="Daily">Daily</option>
+                            <option value="Twice Daily">Twice Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="As Needed">As Needed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="med-time">Time</label>
+                        <input type="time" id="med-time" name="time" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeModal('medication-form-modal')" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-save">Save Medicine</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- === 2. APPOINTMENT FORM MODAL (NEW) === -->
+        <div id="appointment-form-modal" class="form-modal">
+            <div class="form-modal-content">
+                <h2 class="view-title" style="margin-top: 0; font-size: 2rem;">Schedule Appointment</h2>
+                <form id="add-appointment-form">
+                    <div class="form-group">
+                        <label for="appt-title">Title</label>
+                        <input type="text" id="appt-title" name="title" placeholder="e.g., Doctor Check-up" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appt-date">Date</label>
+                        <input type="date" id="appt-date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appt-time">Time</label>
+                        <input type="time" id="appt-time" name="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appt-location">Location/Doctor</label>
+                        <input type="text" id="appt-location" name="location" placeholder="e.g., Dr. Smith, Hospital">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeModal('appointment-form-modal')" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-save">Save Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- === 3. CONTACT FORM MODAL (NEW) === -->
+        <div id="contact-form-modal" class="form-modal">
+            <div class="form-modal-content">
+                <h2 class="view-title" style="margin-top: 0; font-size: 2rem;">Add Key Contact</h2>
+                <form id="add-contact-form">
+                    <div class="form-group">
+                        <label for="contact-name">Name</label>
+                        <input type="text" id="contact-name" name="name" placeholder="e.g., Caregiver Jane" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-phone">Phone Number</label>
+                        <input type="tel" id="contact-phone" name="phone" placeholder="e.g., (555) 123-4567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-relation">Relationship</label>
+                        <select id="contact-relation" name="relationship">
+                            <option value="Family">Family</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Caregiver">Caregiver</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeModal('contact-form-modal')" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-save">Save Contact</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- === 4. BILLS FORM MODAL (NEW) === -->
+        <div id="bills-form-modal" class="form-modal">
+            <div class="form-modal-content">
+                <h2 class="view-title" style="margin-top: 0; font-size: 2rem;">Add New Bill</h2>
+                <form id="add-bill-form">
+                    <div class="form-group">
+                        <label for="bill-name">Bill Name</label>
+                        <input type="text" id="bill-name" name="name" placeholder="e.g., Electricity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-amount">Amount ($)</label>
+                        <input type="number" id="bill-amount" name="amount" step="0.01" placeholder="e.g., 75.50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-due-date">Due Date</label>
+                        <input type="date" id="bill-due-date" name="dueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-status">Status</label>
+                        <select id="bill-status" name="status">
+                            <option value="Pending">Pending</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeModal('bills-form-modal')" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-save">Save Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- === 5. VOLUNTEER REQUEST MODAL (NEW - Static) === -->
+        <div id="volunteer-request-modal" class="form-modal">
+            <div class="form-modal-content">
+                <h2 class="view-title" style="margin-top: 0; font-size: 2rem;">Request Volunteer Help</h2>
+                <form id="volunteer-request-form">
+                    <div class="form-group">
+                        <label for="volunteer-type">Type of Assistance Needed</label>
+                        <select id="volunteer-type" name="type" required>
+                            <option value="" disabled selected>Select a service type</option>
+                            <option value="Caregiver">Caregiver/Companion</option>
+                            <option value="Maid">Maid/Housekeeping</option>
+                            <option value="Worker">Handyman/Worker</option>
+                            <option value="Medical">Medical Consultation</option>
+                            <option value="Transport">Transportation</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="volunteer-reason">Briefly describe why you need assistance:</label>
+                        <textarea id="volunteer-reason" name="reason" rows="4" placeholder="e.g., I need help with groceries this week and light cleaning." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeModal('volunteer-request-modal')" class="btn-cancel">Cancel</button>
+                        <button type="button" id="submit-volunteer-request" class="btn-primary-blue">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+
+        <!-- Main Views Container -->
+
+        <!-- 1. DASHBOARD VIEW -->
+        <div id="view-dashboard" class="view">
+            <!-- Emergency Button -->
+            <button class="emergency-btn">
+                🚨 TAP FOR EMERGENCY 🚨
+            </button>
+
+            <!-- Feature Grid -->
+            <div class="feature-grid">
+                <button class="feature-card dash-card-large medication-card" onclick="showView('view-medication')">
+                    <span class="icon">💊</span>
+                    <span class="title">Medications</span>
+                    <span id="dash-meds-detail" class="detail">Loading schedule...</span>
+                </button>
+
+                <button class="feature-card dash-card-large appointment-card" onclick="showView('view-appointments')">
+                    <span class="icon">🗓️</span>
+                    <span class="title">Appointments</span>
+                    <span id="dash-appt-detail" class="detail">Loading schedule...</span>
+                </button>
+
+                <button class="feature-card contacts-card" onclick="showView('view-contacts')">
+                    <span class="icon">👪</span>
+                    <span class="title">Key Contacts</span>
+                    <span id="dash-contact-detail" class="detail">Loading contacts...</span>
+                </button>
+                
+                 <button class="feature-card bills-card" onclick="showView('view-bills')">
+                    <span class="icon">💰</span>
+                    <span class="title">Bills</span>
+                    <span id="dash-bills-detail" class="detail">Loading bills...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. MEDICATION VIEW -->
+        <div id="view-medication" class="view">
+            <h2 class="view-title">My Medicines</h2>
+            <div id="medication-list-container"></div>
+            <button class="add-btn" onclick="openModal('medication-form-modal')" style="background-color: var(--pastel-mint); color: #1A533E;">+ Add New Medicine</button>
+        </div>
+
+        <!-- 3. APPOINTMENTS VIEW -->
+        <div id="view-appointments" class="view">
+            <h2 class="view-title">Appointments</h2>
+            <div id="appointment-list-container"></div>
+            <button class="add-btn" onclick="openModal('appointment-form-modal')" style="background-color: var(--pastel-peach); color: #8C4724;">+ Add New Appointment</button>
+        </div>
+
+        <!-- 4. CONTACTS VIEW -->
+        <div id="view-contacts" class="view">
+            <h2 class="view-title">Key Contacts</h2>
+            <div id="contact-list-container"></div>
+            <button class="add-btn" onclick="openModal('contact-form-modal')" style="background-color: var(--pastel-blue); color: var(--dark-text-blue); margin-bottom: 5px;">+ Add New Contact</button>
+            <button class="add-btn" onclick="openModal('volunteer-request-modal')" style="background-color: #E0E5EB; color: var(--text-dark);">📢 Request Volunteer/Help</button>
+        </div>
+        
+        <!-- 5. BILLS VIEW (NEW) -->
+        <div id="view-bills" class="view">
+            <h2 class="view-title">Upcoming Bills</h2>
+            <div id="bills-list-container"></div>
+            <button class="add-btn" onclick="openModal('bills-form-modal')" style="background-color: var(--pastel-yellow); color: #6D6D1A;">+ Add New Bill</button>
+        </div>
+        
+        <!-- 6. SETTINGS VIEW -->
+        <div id="view-settings" class="view">
+            <h2 class="view-title">Settings</h2>
+            <div class="list-item" style="display: block;">
+                <strong>Text Size</strong>
+                <span>Adjust font size for better reading</span>
+                <input type="range" min="100" max="150" value="100" id="text-size-slider" style="width: 100%; margin-top: 10px;">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar (6 items) -->
+    <nav class="bottom-nav">
+        <button id="nav-dashboard" class="nav-btn active" onclick="showView('view-dashboard', this)">
+            <span class="icon">🏠</span> Home
+        </button>
+        <button id="nav-medication" class="nav-btn" onclick="showView('view-medication', this)">
+            <span class="icon">💊</span> Meds
+        </button>
+        <button id="nav-appointments" class="nav-btn" onclick="showView('view-appointments', this)">
+            <span class="icon">🗓️</span> Calendar
+        </button>
+        <button id="nav-contacts" class="nav-btn" onclick="showView('view-contacts', this)">
+            <span class="icon">👪</span> Contacts
+        </button>
+        <button id="nav-bills" class="nav-btn" onclick="showView('view-bills', this)">
+            <span class="icon">💰</span> Bills
+        </button>
+        <button id="nav-settings" class="nav-btn" onclick="showView('view-settings', this)">
+            <span class="icon">⚙️</span> Settings
+        </button>
+    </nav>
+
+    <script>
+        // --- Local Storage Management ---
+        const LOCAL_STORAGE_KEY = 'suno_assistant_local_data';
+        let appData = {
+            medications: [],
+            appointments: [],
+            contacts: [],
+            bills: []
+        };
+
+        /**
+         * Loads data from localStorage or initializes it if not found.
+         */
+        function loadData() {
+            try {
+                const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (storedData) {
+                    appData = JSON.parse(storedData);
+                } else {
+                    console.log("No data found in local storage. Initializing new structure.");
+                }
+            } catch (error) {
+                console.error("Error loading data from local storage:", error);
+            }
+        }
+
+        /**
+         * Saves the current appData state to localStorage.
+         */
+        function saveData() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
+            } catch (error) {
+                console.error("Error saving data to local storage:", error);
+                showModal("Failed to save data to your browser's local storage.");
+            }
+        }
+        
+        /**
+         * Generates a simple, unique ID.
+         */
+        function generateId() {
+            return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+        }
+
+        // --- Core UI Functions ---
+
+        /**
+         * Utility to show custom modal instead of alert()
+         */
+        function showModal(message) {
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('app-modal').style.display = 'flex';
+        }
+        
+        /**
+         * Opens a modal by ID.
+         */
+        window.openModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        /**
+         * Closes a modal by ID and resets its form.
+         */
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            const form = document.getElementById(modalId).querySelector('form');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        /**
+         * Deletes an item from an array in appData and saves/re-renders.
+         * @param {string} type - 'medications', 'appointments', 'contacts', 'bills'
+         * @param {string} id - The unique ID of the item to delete.
+         * @param {string} itemName - Name for the confirmation modal.
+         */
+        window.deleteItem = function(type, id, itemName) {
+            if (confirm(`Are you sure you want to delete "${itemName}"? This cannot be undone.`)) {
+                const initialLength = appData[type].length;
+                appData[type] = appData[type].filter(item => item.id !== id);
+                
+                if (appData[type].length < initialLength) {
+                    saveData();
+                    renderAllData();
+                    showModal(`${itemName} successfully removed.`);
+                } else {
+                    showModal(`Error: Could not find ${itemName} to delete.`);
+                }
+            }
+        }
+
+        // --- CRUD Save Functions ---
+
+        function saveItem(type, data, successMessage) {
+            // Basic ID assignment
+            data.id = generateId(); 
+            
+            appData[type].push(data);
+            
+            saveData();
+            renderAllData(); 
+            
+            showModal(successMessage);
+        }
+
+        // 1. Medication
+        function addMedication(medData) {
+            if (!medData.name || !medData.dosage || !medData.time) {
+                showModal("Please fill in all required fields: Name, Dosage, and Time.");
+                return;
+            }
+            saveItem('medications', medData, `${medData.name} successfully added to your schedule!`);
+            closeModal('medication-form-modal');
+        }
+
+        // 2. Appointment
+        function addAppointment(apptData) {
+            if (!apptData.title || !apptData.date || !apptData.time) {
+                showModal("Please fill in all required fields: Title, Date, and Time.");
+                return;
+            }
+            saveItem('appointments', apptData, `${apptData.title} scheduled for ${apptData.date}!`);
+            closeModal('appointment-form-modal');
+        }
+        
+        // 3. Contact
+        function addContact(contactData) {
+            if (!contactData.name || !contactData.phone) {
+                showModal("Please fill in all required fields: Name and Phone Number.");
+                return;
+            }
+            saveItem('contacts', contactData, `${contactData.name} (${contactData.relationship}) saved to contacts.`);
+            closeModal('contact-form-modal');
+        }
+        
+        // 4. Bill
+        function addBill(billData) {
+            if (!billData.name || !billData.amount || !billData.dueDate) {
+                showModal("Please fill in all required fields: Bill Name, Amount, and Due Date.");
+                return;
+            }
+            saveItem('bills', billData, `${billData.name} bill saved (Due: ${billData.dueDate}).`);
+            closeModal('bills-form-modal');
+        }
+
+
+        /**
+         * Renders all data sections from the local appData state.
+         */
+        function renderAllData() {
+            renderMedications(appData.medications);
+            renderAppointments(appData.appointments);
+            renderContacts(appData.contacts);
+            renderBills(appData.bills);
+        }
+
+        // --- Rendering Functions ---
+        
+        function renderMedications(meds) {
+            const container = document.getElementById('medication-list-container');
+            container.innerHTML = '';
+            
+            if (meds.length === 0) {
+                container.innerHTML = `<div class="list-placeholder">No medications added yet.</div>`;
+                document.getElementById('dash-meds-detail').textContent = 'No schedule found.';
+                return;
+            }
+
+            meds.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+            meds.forEach(med => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-info">
+                        <strong>${med.name}</strong>
+                        <span>Dosage: ${med.dosage} | Freq: ${med.frequency} at ${med.time}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('medications', '${med.id}', '${med.name}')">❌</button>
+                `;
+                container.appendChild(div);
+            });
+
+            const nextMeds = meds.find(m => m.time);
+            document.getElementById('dash-meds-detail').textContent = nextMeds 
+                ? `Next: ${nextMeds.name} at ${nextMeds.time}`
+                : `${meds.length} meds saved.`;
+        }
+
+        function renderAppointments(appointments) {
+            const container = document.getElementById('appointment-list-container');
+            container.innerHTML = '';
+            
+            if (appointments.length === 0) {
+                container.innerHTML = `<div class="list-placeholder">No appointments scheduled.</div>`;
+                document.getElementById('dash-appt-detail').textContent = 'No upcoming appointments.';
+                return;
+            }
+
+            appointments.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+            appointments.forEach(appt => {
+                 const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-info">
+                        <strong>${appt.title}</strong>
+                        <span>Date: ${appt.date} Time: ${appt.time} | Location: ${appt.location || 'N/A'}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('appointments', '${appt.id}', '${appt.title}')">❌</button>
+                `;
+                container.appendChild(div);
+            });
+            
+            const nextAppt = appointments[0];
+            document.getElementById('dash-appt-detail').textContent = nextAppt 
+                ? `Next: ${nextAppt.title} on ${nextAppt.date}`
+                : `${appointments.length} appointments saved.`;
+        }
+
+        function renderContacts(contacts) {
+            const container = document.getElementById('contact-list-container');
+            container.innerHTML = '';
+            
+            if (contacts.length === 0) {
+                container.innerHTML = `<div class="list-placeholder">No contacts saved yet.</div>`;
+                document.getElementById('dash-contact-detail').textContent = 'No contacts saved.';
+                return;
+            }
+
+            contacts.forEach(contact => {
+                 const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="list-info">
+                        <strong>${contact.name} (${contact.relationship})</strong>
+                        <span>Call: <a href="tel:${contact.phone}">${contact.phone}</a></span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('contacts', '${contact.id}', '${contact.name}')">❌</button>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('dash-contact-detail').textContent = `${contacts.length} important contacts saved.`;
+        }
+        
+        function renderBills(bills) {
+            const container = document.getElementById('bills-list-container');
+            container.innerHTML = '';
+            
+            if (bills.length === 0) {
+                container.innerHTML = `<div class="list-placeholder">No bills saved yet.</div>`;
+                document.getElementById('dash-bills-detail').textContent = 'No upcoming bills.';
+                return;
+            }
+
+            bills.sort((a, b) => (a.dueDate).localeCompare(b.dueDate));
+
+            bills.forEach(bill => {
+                 const div = document.createElement('div');
+                div.className = 'list-item';
+                const statusColor = bill.status === 'Pending' ? '#FF5733' : (bill.status === 'Paid' ? '#33FF57' : '#990000');
+                const statusText = bill.status === 'Paid' ? '✅ Paid' : (bill.status === 'Overdue' ? '🛑 Overdue' : '🟡 Pending');
+                div.innerHTML = `
+                    <div class="list-info">
+                        <strong>${bill.name} ($${parseFloat(bill.amount).toFixed(2)})</strong>
+                        <span>Due: ${bill.dueDate} | Status: <span style="font-weight:700; color:${statusColor}">${statusText}</span></span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('bills', '${bill.id}', '${bill.name}')">❌</button>
+                `;
+                container.appendChild(div);
+            });
+            
+            const pendingBills = bills.filter(b => b.status === 'Pending').length;
+            document.getElementById('dash-bills-detail').textContent = pendingBills > 0 
+                ? `${pendingBills} bill${pendingBills > 1 ? 's' : ''} pending.`
+                : 'All clear!';
+        }
+
+
+        // --- UI & Event Handlers ---
+
+        /**
+         * Switches the active view and updates navigation buttons.
+         */
+        window.showView = function(viewId, clickedButton = null) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.style.display = 'none';
+            });
+
+            // Show the target view
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.style.display = 'block';
+            }
+
+            // Update navigation button styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            } else {
+                const navId = `nav-${viewId.split('-')[1]}`;
+                const defaultNavBtn = document.getElementById(navId);
+                 if(defaultNavBtn) defaultNavBtn.classList.add('active');
+            }
+        }
+
+        /**
+         * Updates the current time and date every second.
+         */
+        function updateTime() {
+            const now = new Date();
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
+
+            const timeStr = now.toLocaleTimeString('en-US', timeOptions);
+            const dateStr = now.toLocaleDateString('en-US', dateOptions);
+
+            document.getElementById('time-date').textContent = `${timeStr} | ${dateStr}`;
+        }
+
+
+        // --- Initialization ---
+
+        window.onload = function () {
+            // 1. Load data from local storage
+            loadData();
+
+            // 2. Set up Time Display
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // 3. Render initial data from local storage
+            renderAllData();
+
+            // 4. Show Default View
+            showView('view-dashboard', document.getElementById('nav-dashboard'));
+
+            // 5. Handle Emergency Button
+            document.querySelector('.emergency-btn').addEventListener('click', () => {
+                showModal("🚨 EMERGENCY ALERT! Contacting your primary contact now (Demo only). Stay calm.");
+            });
+
+            // 6. Form Submission Handlers
+
+            // Medication
+            document.getElementById('add-medication-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const medData = {
+                    name: form.name.value, dosage: form.dosage.value, 
+                    frequency: form.frequency.value, time: form.time.value
+                };
+                addMedication(medData);
+            });
+
+            // Appointment
+            document.getElementById('add-appointment-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const apptData = {
+                    title: form.title.value, date: form.date.value, 
+                    time: form.time.value, location: form.location.value
+                };
+                addAppointment(apptData);
+            });
+
+            // Contact
+            document.getElementById('add-contact-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const contactData = {
+                    name: form.name.value, phone: form.phone.value, 
+                    relationship: form.relationship.value
+                };
+                addContact(contactData);
+            });
+            
+            // Bill
+            document.getElementById('add-bill-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const billData = {
+                    name: form.name.value, amount: form.amount.value, 
+                    dueDate: form.dueDate.value, status: form.status.value
+                };
+                addBill(billData);
+            });
+            
+            // Volunteer Request (Static submit)
+            document.getElementById('submit-volunteer-request').addEventListener('click', () => {
+                const type = document.getElementById('volunteer-type').value;
+                const reason = document.getElementById('volunteer-reason').value;
+                
+                if (!type || !reason) {
+                    showModal("Please select the type of assistance and describe why you need help.");
+                    return;
+                }
+                
+                showModal(`Thank you! A request for a **${type}** has been sent with the reason: "${reason}". A coordinator will be in touch shortly (Demo Only).`);
+                closeModal('volunteer-request-modal');
+            });
+            
+            // Accessibility Slider
+            const textSizeSlider = document.getElementById('text-size-slider');
+            if (textSizeSlider) {
+                textSizeSlider.addEventListener('input', (e) => {
+                    const percentage = e.target.value;
+                    document.body.style.fontSize = `${percentage / 100}em`;
+                });
+            }
+        };
+    </script>
+</body>
+</html>
